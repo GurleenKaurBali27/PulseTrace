@@ -1,0 +1,84 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "env": {
+    "NODE_ENV": "production",
+    "DATABASE_URL": "@database_url",
+    "SERVER_PORT": "@server_port",
+    "JWT_SECRET": "@jwt_secret"
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm run setup",
+  "framework": "express",
+  "regions": ["iad1"],
+  "functions": {
+    "server/server.js": {
+      "memory": 1024,
+      "timeout": 60,
+      "includeFiles": "server/**/*"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server/server.js"
+    },
+    {
+      "source": "/health(.*)",
+      "destination": "/server/server.js"
+    },
+    {
+      "source": "/(.*\\..*)",
+      "destination": "/client/dist/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/dist/index.html"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "methods": ["GET", "HEAD", "OPTIONS"],
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/"
+    },
+    {
+      "src": "/api/(.*)",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      "dest": "/server/server.js"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/health(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        }
+      ]
+    }
+  ],
+  "env_production": {
+    "NODE_ENV": "production",
+    "LOG_LEVEL": "error",
+    "FEATURE_REALTIME": "true",
+    "FEATURE_ALERTS": "true"
+  }
+}

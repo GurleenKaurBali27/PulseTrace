@@ -1,0 +1,143 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: api-visualizer-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-api_failure_visualizer}
+      POSTGRES_USER: ${POSTGRES_USER:-dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev123}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-network
+
+  # Redis Cache (optional, for future features)
+  redis:
+    image: redis:7-alpine
+    container_name: api-visualizer-cache
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-network
+    profiles:
+      - cache
+
+  # API Server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-visualizer-server
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dev}:${POSTGRES_PASSWORD:-dev123}@postgres:5432/${POSTGRES_DB:-api_failure_visualizer}
+      SERVER_PORT: 5000
+      CLIENT_PORT: 5173
+      TESTAPI_PORT: 4000
+      VITE_API_URL: http://localhost:5000
+      TRACKER_URL: http://localhost:5000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENABLE_MIGRATIONS: "true"
+      ENABLE_MEMORY_MONITORING: ${ENABLE_MEMORY_MONITORING:-false}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+        required: false
+    volumes:
+      - ./server:/app/server
+      - ./tracker:/app/tracker
+    networks:
+      - api-network
+    command: npm run dev:server
+    profiles:
+      - dev
+
+  # Client Development Server
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: api-visualizer-client
+    environment:
+      VITE_API_URL: http://localhost:5000
+      CLIENT_PORT: 5173
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+    networks:
+      - api-network
+    command: npm run dev
+    profiles:
+      - dev
+
+  # Test API Service
+  testapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.testapi
+    container_name: api-visualizer-testapi
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      TESTAPI_PORT: 4000
+      SERVER_PORT: 5000
+      TRACKER_URL: http://localhost:5000
+      TRACKER_SERVICE_NAME: docker-test-api
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "4000:4000"
+    depends_on:
+      - server
+    networks:
+      - api-network
+    command: npm run dev:testapi
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  api-network:
+    driver: bridge
+
+# Usage:
+# 
+# Development with all services:
+#   docker-compose --profile dev up
+#
+# Production build only:
+#   docker-compose build
+#   docker-compose up
+#
+# With caching enabled:
+#   docker-compose --profile dev --profile cache up
+#
+# Specific services only:
+#   docker-compose up postgres redis
+#   docker-compose up -d server

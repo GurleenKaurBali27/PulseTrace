@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Testing
+*.test.js
+*.spec.js
+test/
+tests/
+
+# Documentation
+*.md
+!README.md
+
+# Hidden files
+.DS_Store
+.git
+.gitignore
+.npmignore
+.eslintrc*
+.prettierrc*
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Examples (except main README)
+EXAMPLE_USAGE.js
+examples/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

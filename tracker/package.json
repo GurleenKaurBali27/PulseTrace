@@ -1,0 +1,49 @@
+{
+  "name": "api-failure-tracker",
+  "version": "1.0.0",
+  "description": "Express middleware to track API requests/responses and send to visualization server for local development observability",
+  "main": "tracker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/api-failure-visualizer.git",
+    "directory": "tracker"
+  },
+  "keywords": [
+    "api",
+    "tracking",
+    "middleware",
+    "express",
+    "observability",
+    "monitoring",
+    "development",
+    "debugging",
+    "http",
+    "requests",
+    "responses"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.5"
+  },
+  "files": [
+    "tracker.js",
+    "logger.js",
+    "sendLog.js",
+    "logs/"
+  ],
+  "homepage": "https://github.com/yourusername/api-failure-visualizer#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/api-failure-visualizer/issues"
+  }
+}

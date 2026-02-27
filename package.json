@@ -1,0 +1,57 @@
+{
+  "name": "api-failure-visualizer",
+  "version": "1.0.0",
+  "description": "Production-ready API Failure Visualizer - Monitor, analyze, and alert on API failures across multiple services",
+  "author": "Your Name",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "verify": "node verify-startup.js",
+    "dev": "npm run verify && concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:testapi\"",
+    "dev:server": "npm --prefix ./server run dev",
+    "dev:client": "npm --prefix ./client run dev",
+    "dev:testapi": "npm --prefix ./testAPI run dev",
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\" \"npm run start:testapi\"",
+    "start:server": "npm --prefix ./server start",
+    "start:client": "npm --prefix ./client run build && npm --prefix ./client run preview",
+    "start:testapi": "npm --prefix ./testAPI start",
+    "build": "npm run build:server && npm run build:client && npm run build:testapi",
+    "build:server": "npm --prefix ./server run build",
+    "build:client": "npm --prefix ./client run build",
+    "build:testapi": "npm --prefix ./testAPI run build",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "npm --prefix ./server test",
+    "test:client": "npm --prefix ./client test",
+    "migrate": "npm --prefix ./server run migrate",
+    "migrate:down": "npm --prefix ./server run migrate:down",
+    "migrate:status": "npm --prefix ./server run migrate:status",
+    "setup": "npm install && npm --prefix ./server install && npm --prefix ./client install && npm --prefix ./testAPI install",
+    "clean": "rm -rf node_modules server/node_modules client/node_modules testAPI/node_modules",
+    "reinstall": "npm run clean && npm run setup"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "chalk": "^4.1.2",
+    "axios": "^1.6.2"
+  },
+  "keywords": [
+    "api",
+    "monitoring",
+    "failure-detection",
+    "alerts",
+    "analytics",
+    "microservices"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/api-failure-visualizer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/api-failure-visualizer/issues"
+  }
+}
+

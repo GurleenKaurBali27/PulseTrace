@@ -1,0 +1,156 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: api-visualizer-db
+    runtime: docker
+    plan: starter
+    region: us-east
+    repo: https://github.com/yourusername/api-failure-visualizer
+    rootDir: .
+    dockerfilePath: Dockerfile.db
+    envVars:
+      - key: POSTGRES_DB
+        value: api_failure_visualizer
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+    persistentDisk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
+    healthCheck:
+      path: /
+      protocol: TCP
+      initialDelaySeconds: 30
+      intervalSeconds: 10
+      timeoutSeconds: 5
+      maxRetries: 3
+
+  # API Server
+  - type: web
+    name: api-visualizer-server
+    runtime: node
+    plan: starter
+    region: us-east
+    repo: https://github.com/yourusername/api-failure-visualizer
+    rootDir: server
+    buildCommand: npm install && npm run migrate
+    startCommand: npm start
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: api-visualizer-db
+          property: connectionString
+      - key: SERVER_PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_MIGRATIONS
+        value: "true"
+      - key: FEATURE_REALTIME
+        value: "true"
+      - key: FEATURE_ALERTS
+        value: "true"
+      - key: FEATURE_MULTISERVICE
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: api-visualizer-server
+          envVarKey: RENDER_EXTERNAL_URL
+    healthCheckPath: /health/ready
+    healthCheckInterval: 30
+    disk:
+      name: server-data
+      mountPath: /app/data
+      sizeGB: 5
+
+  # React Client (Static Site)
+  - type: static_site
+    name: api-visualizer-client
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: api-visualizer-server
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # Test API Service (optional)
+  - type: background_worker
+    name: api-visualizer-testapi
+    runtime: node
+    plan: starter
+    repo: https://github.com/yourusername/api-failure-visualizer
+    rootDir: testAPI
+    buildCommand: npm install
+    startCommand: npm start
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TESTAPI_PORT
+        value: "4000"
+      - key: TRACKER_URL
+        fromService:
+          type: web
+          name: api-visualizer-server
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TRACKER_SERVICE_NAME
+        value: render-test-api
+      - key: LOG_LEVEL
+        value: info
+
+# Databases
+databases:
+  - name: api-visualizer-db
+    databaseName: api_failure_visualizer
+    user: postgres
+    plan: starter
+    region: us-east
+    postgresMajorVersion: "15"
+    preDeleteScript: |
+      BEGIN;
+      DROP SCHEMA public CASCADE;
+      CREATE SCHEMA public;
+      COMMIT;
+
+# Environment configuration
+env:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  CORS_ORIGINS: ${RENDER_EXTERNAL_URL},https://yourdomain.com
+  DEPLOYMENT_PLATFORM: render
+
+# Deployment settings
+deploy:
+  fromRepo:
+    repo: https://github.com/yourusername/api-failure-visualizer
+    branch: main
+    autoQueue: true
+    autoDeployOnPush: true
+
+# Notifications
+notifications:
+  - type: email
+    enabled: true
+
+# CDN settings
+routes:
+  - pattern: /api/*
+    service: api-visualizer-server
+    priority: 100
+  - pattern: /health/*
+    service: api-visualizer-server
+    priority: 100
+  - pattern: /*
+    service: api-visualizer-client
+    priority: 1
