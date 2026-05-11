@@ -1,4 +1,4 @@
-# 🚨 API Failure Visualizer
+# 🚨PulseTrace API Failure Visualizer
 
 > **Production-ready tool to monitor, visualize, and alert on API failures across multiple microservices**
 
