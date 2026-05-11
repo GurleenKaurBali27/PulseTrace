@@ -55,7 +55,28 @@ export default function Dashboard() {
     route: ""
   });
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const unsubscribeRef = useRef(null);
+
+  // Generate Demo Data by pinging the test API
+  const generateDemoData = async () => {
+    setDemoLoading(true);
+    try {
+      const endpoints = ['/success', '/fail', '/slow', '/not-found', '/unauthorized', '/random'];
+      // Fire 5-8 random requests
+      const numRequests = Math.floor(Math.random() * 4) + 5;
+      const promises = [];
+      for (let i = 0; i < numRequests; i++) {
+        const randomEndpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
+        promises.push(fetch(`http://localhost:4000${randomEndpoint}`).catch(() => {}));
+      }
+      await Promise.all(promises);
+    } catch (err) {
+      console.error("Error generating demo data:", err);
+    } finally {
+      setTimeout(() => setDemoLoading(false), 500); // Slight delay for UI effect
+    }
+  };
 
   // Build query parameters from filters and service
   const buildQueryParams = () => {
@@ -182,12 +203,33 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <button
-          className="btn-primary"
-          onClick={() => navigate("/analytics")}
-        >
-          📊 Analytics Dashboard
-        </button>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button
+            onClick={generateDemoData}
+            disabled={demoLoading}
+            style={{
+              background: demoLoading ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.1)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.2)",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              cursor: demoLoading ? "not-allowed" : "pointer",
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "all 0.2s"
+            }}
+          >
+            {demoLoading ? "⏳ Generating..." : "🎬 Demo Mode"}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate("/analytics")}
+          >
+            📊 Analytics Dashboard
+          </button>
+        </div>
       </div>
 
       {/* Alerts Panel */}
