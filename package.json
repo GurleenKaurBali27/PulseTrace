@@ -2,7 +2,7 @@
   "name": "api-failure-visualizer",
   "version": "1.0.0",
   "description": "Production-ready API Failure Visualizer - Monitor, analyze, and alert on API failures across multiple services",
-  "author": "Your Name",
+  "author": "Gurleen Kaur Bali",
   "license": "MIT",
   "private": false,
   "engines": {
@@ -10,7 +10,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "verify": "node verify-startup.js",
+    "verify": "node scripts/verify-startup.js",
     "dev": "npm run verify && concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:testapi\"",
     "dev:server": "npm --prefix ./server run dev",
     "dev:client": "npm --prefix ./client run dev",
@@ -48,10 +48,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/api-failure-visualizer.git"
+    "url": "https://github.com/GurleenKaurBali27/PulseTrace.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/api-failure-visualizer/issues"
+    "url": "https://github.com/GurleenKaurBali27/PulseTrace/issues"
   },
   "dependencies": {
     "dotenv": "^17.3.1"
