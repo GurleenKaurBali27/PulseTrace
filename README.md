@@ -369,7 +369,7 @@ The project is being developed in 5 phases:
 
 Each phase adds production-readiness features.
 
-**See [Deployment Guide](DEPLOYMENT.md) for cloud deployment instructions** (Phase 4)
+**See [Deployment Guide](docs/PHASE4.md) for cloud deployment instructions** (Phase 4)
 
 ---
 
@@ -434,7 +434,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💬 Support & Feedback
 
-- 📖 **Documentation**: See [SETUP.md](SETUP.md) for detailed setup and configuration
+- 📖 **Documentation**: See [SETUP.md](docs/SETUP.md) for detailed setup and configuration
 - 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/GurleenKaurBali27/api-failure-visualizer/issues)
 - 💡 **Ideas**: Share feature requests and ideas
 
