@@ -234,25 +234,29 @@ const styles = {
     marginBottom: "30px"
   },
   title: {
-    fontSize: "24px",
-    fontWeight: "bold",
+    fontSize: "20px",
+    fontWeight: "600",
     marginBottom: "20px",
-    color: "#333"
+    color: "var(--text-main)",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
   },
   gridContainer: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-    gap: "15px",
+    gap: "20px",
     marginBottom: "30px"
   },
   card: {
-    backgroundColor: "white",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
+    backgroundColor: "var(--bg-card)",
+    backdropFilter: "blur(8px)",
+    border: "1px solid var(--border-color)",
+    borderRadius: "12px",
     padding: "20px",
-    borderLeft: "4px solid #2196F3",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    transition: "transform 0.2s, box-shadow 0.2s",
+    borderLeft: "4px solid var(--accent-primary)",
+    boxShadow: "var(--shadow-sm)",
+    transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s",
     cursor: "default"
   },
   cardHeader: {
@@ -261,24 +265,28 @@ const styles = {
     marginBottom: "10px"
   },
   icon: {
-    fontSize: "28px",
-    marginRight: "10px"
+    fontSize: "24px",
+    marginRight: "10px",
+    opacity: 0.9
   },
   cardTitle: {
-    fontSize: "14px",
+    fontSize: "13px",
     fontWeight: "600",
-    color: "#666",
+    color: "var(--text-muted)",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
     margin: 0
   },
   cardValue: {
     fontSize: "32px",
-    fontWeight: "bold",
+    fontWeight: "700",
     margin: "10px 0",
-    color: "#2196F3"
+    color: "var(--text-main)",
+    letterSpacing: "-0.02em"
   },
   cardSubtitle: {
     fontSize: "12px",
-    color: "#999",
+    color: "var(--text-muted)",
     margin: "5px 0 0 0"
   },
   detailsSection: {
@@ -287,10 +295,12 @@ const styles = {
     gap: "20px"
   },
   detailsBox: {
-    backgroundColor: "#f9f9f9",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
-    padding: "20px"
+    backgroundColor: "var(--bg-panel)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid var(--border-color)",
+    borderRadius: "12px",
+    padding: "20px",
+    boxShadow: "var(--shadow-sm)"
   },
   statsList: {
     marginTop: "15px"
@@ -299,7 +309,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "8px 0",
-    borderBottom: "1px solid #eee"
+    padding: "10px 0",
+    borderBottom: "1px solid var(--border-color)",
+    fontSize: "14px"
   }
 };

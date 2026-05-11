@@ -203,7 +203,7 @@ All logs from different services will be aggregated in the visualization dashboa
 
 ### With API Failure Visualizer
 
-The tracker is designed to work with [API Failure Visualizer](https://github.com/yourusername/api-failure-visualizer). Install both:
+The tracker is designed to work with [API Failure Visualizer](https://github.com/GurleenKaurBali27/api-failure-visualizer). Install both:
 
 ```bash
 npm install api-failure-tracker
@@ -417,11 +417,11 @@ MIT - See LICENSE file for details
 For issues, questions, or feature requests:
 - Open an issue on GitHub
 - Check existing issues for solutions
-- Review the [main project](https://github.com/yourusername/api-failure-visualizer)
+- Review the [main project](https://github.com/GurleenKaurBali27/api-failure-visualizer)
 
 ## Related Packages
 
-- **[api-failure-visualizer](https://github.com/yourusername/api-failure-visualizer)** - Server & dashboard for visualizing tracked logs
+- **[api-failure-visualizer](https://github.com/GurleenKaurBali27/api-failure-visualizer)** - Server & dashboard for visualizing tracked logs
 
 ## Changelog
 

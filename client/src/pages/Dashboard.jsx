@@ -170,26 +170,23 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h1 style={{ margin: 0 }}>🚀 API Failure Visualizer</h1>
+    <div style={{ padding: "30px", maxWidth: "1600px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 style={{ margin: "0 0 8px 0", fontSize: "28px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "32px" }}>⚡</span> API Visualizer
+          </h1>
+          <div style={{ color: "var(--text-muted)", fontSize: "14px", display: "flex", alignItems: "center" }}>
+            <span className="status-dot active"></span> Live Monitoring Active
+          </div>
+        </div>
+        
         <button
+          className="btn-primary"
           onClick={() => navigate("/analytics")}
-          style={{
-            padding: "10px 16px",
-            backgroundColor: "#2196F3",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "500",
-            transition: "all 0.2s ease"
-          }}
-          onMouseEnter={(e) => (e.target.style.backgroundColor = "#1976D2")}
-          onMouseLeave={(e) => (e.target.style.backgroundColor = "#2196F3")}
         >
-          📊 Analytics & Insights
+          📊 Analytics Dashboard
         </button>
       </div>
 
@@ -199,152 +196,138 @@ export default function Dashboard() {
       {/* Analytics Summary */}
       <AnalyticsSummary logs={logs} />
 
-      {/* Service Selector */}
-      <div style={{ maxWidth: "250px" }}>
-        <ServiceSelector selectedService={selectedService} onServiceChange={handleServiceChange} />
+      {/* Controls Container */}
+      <div className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+          <div style={{ width: "250px" }}>
+            <ServiceSelector selectedService={selectedService} onServiceChange={handleServiceChange} />
+          </div>
+          <div style={{ flex: 1 }}>
+             <FilterBar onFilterChange={handleFilterChange} currentFilters={filters} />
+          </div>
+        </div>
+        
+        <div style={{ color: "var(--text-muted)", fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {loading ? (
+            <span>⏳ Synchronizing data...</span>
+          ) : (
+            <span>📊 Showing <strong>{logs?.length || 0}</strong> log(s)</span>
+          )}
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar onFilterChange={handleFilterChange} currentFilters={filters} />
+      {/* Table Container */}
+      <div className="data-table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Route</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Duration</th>
+              <th>Size</th>
+              <th>Time</th>
+              <th style={{ width: "100px", textAlign: "center" }}>Actions</th>
+            </tr>
+          </thead>
 
-      {/* Results Info */}
-      <div style={{ marginBottom: "15px", color: "#666", fontSize: "14px" }}>
-        {loading ? (
-          <span>⏳ Loading...</span>
-        ) : (
-          <span>📊 Showing {logs?.length || 0} log(s)</span>
+          <tbody>
+            <AnimatePresence>
+              {logs?.map((log) => {
+                const isError = log.statusCode >= 400;
+                return (
+                <motion.tr
+                  key={log.id}
+                  layout
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => navigate(`/logs/${log.id}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{log.serviceName || "default-service"}</td>
+                  <td style={{ fontWeight: 500 }}>{log.route}</td>
+                  <td>
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: `var(--method-${log.method.toLowerCase()}, rgba(255,255,255,0.1))`,
+                        color: "white"
+                      }}
+                    >
+                      {log.method}
+                    </span>
+                  </td>
+                  <td>
+                    <span 
+                      className="badge"
+                      style={{
+                        backgroundColor: isError ? "var(--status-danger-bg)" : "var(--status-success-bg)",
+                        color: isError ? "var(--status-danger)" : "var(--status-success)",
+                        border: `1px solid ${isError ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
+                      }}
+                    >
+                      {isError ? "🔴" : "🟢"} {log.statusCode}
+                    </span>
+                  </td>
+                  <td
+                    style={{
+                      color: getDurationColor(log.duration) === "#d32f2f" ? "var(--status-danger)" : 
+                             getDurationColor(log.duration) === "#fbc02d" ? "var(--status-warning)" : "var(--text-main)",
+                      fontWeight: getDurationColor(log.duration) !== "#4caf50" ? "bold" : "normal"
+                    }}
+                  >
+                    {log.duration}ms
+                  </td>
+                  <td style={{ color: "var(--text-muted)" }}>{log.responseSize} B</td>
+                  <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                    {new Date(log.createdAt).toLocaleTimeString()}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(generateCurlCommand(log));
+                      }}
+                      title="Copy CURL command"
+                      style={{
+                        background: "rgba(255,255,255,0.1)",
+                        color: "var(--text-main)",
+                        border: "1px solid var(--border-color)",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                      }}
+                    >
+                      📋 Copy
+                    </motion.button>
+                  </td>
+                </motion.tr>
+              )})}
+            </AnimatePresence>
+          </tbody>
+        </table>
+
+        {logs?.length === 0 && !loading && (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.5 }}>🔍</div>
+            <p>No logs match your filters. Try adjusting your search criteria.</p>
+          </div>
         )}
       </div>
-
-      {/* Table */}
-      <table border="1" cellPadding="10" width="100%" style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#f5f5f5" }}>
-            <th>Service</th>
-            <th>Route</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Duration</th>
-            <th>Size</th>
-            <th>Time</th>
-            <th style={{ width: "80px", textAlign: "center" }}>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <AnimatePresence>
-            {logs?.map((log) => (
-              <motion.tr
-                key={log.id}
-                layout
-                initial={{ opacity: 0, x: -50, height: 0 }}
-                animate={{ opacity: 1, x: 0, height: "auto" }}
-                exit={{ opacity: 0, x: 50, height: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                onClick={() => navigate(`/logs/${log.id}`)}
-                style={{
-                  cursor: "pointer",
-                  backgroundColor: "white",
-                  transition: "background-color 0.2s",
-                  borderBottom: "1px solid #ddd"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f9f9f9";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "white";
-                }}
-              >
-                <td style={{ fontSize: "12px", color: "#666", fontFamily: "monospace" }}>{log.serviceName || "default-service"}</td>
-                <td>{log.route}</td>
-                <td>
-                  <span
-                    style={{
-                      backgroundColor:
-                        log.method === "GET"
-                          ? "#cce5ff"
-                          : log.method === "POST"
-                          ? "#fff4cc"
-                          : log.method === "PUT"
-                          ? "#ffe6cc"
-                          : log.method === "DELETE"
-                          ? "#ffcccc"
-                          : "#f0f0f0",
-                      padding: "4px 8px",
-                      borderRadius: "3px",
-                      minWidth: "45px",
-                      display: "inline-block",
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      fontSize: "12px"
-                    }}
-                  >
-                    {log.method}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    color: log.statusCode >= 400 ? "red" : "green",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {log.statusCode >= 400 ? "❌" : "✅"} {log.statusCode}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    color: getDurationColor(log.duration),
-                    fontWeight: "bold",
-                    backgroundColor: getDurationColor(log.duration) === "#d32f2f" ? "#ffebee" : getDurationColor(log.duration) === "#fbc02d" ? "#fffde7" : "transparent"
-                  }}
-                >
-                  {log.duration}ms
-                </td>
-                <td style={{ textAlign: "right" }}>{log.responseSize} B</td>
-                <td style={{ fontSize: "12px", color: "#666" }}>
-                  {new Date(log.createdAt).toLocaleTimeString()}
-                </td>
-                <td style={{ textAlign: "center" }}>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyToClipboard(generateCurlCommand(log));
-                    }}
-                    title="Copy CURL command"
-                    style={{
-                      backgroundColor: "#0066cc",
-                      color: "white",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      transition: "background-color 0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0052a3";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0066cc";
-                    }}
-                  >
-                    📋 Copy
-                  </motion.button>
-                </td>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </tbody>
-      </table>
-
-      {logs?.length === 0 && !loading && (
-        <p style={{ textAlign: "center", color: "#999", marginTop: "20px" }}>
-          No logs match your filters. Try adjusting your search criteria.
-        </p>
-      )}
     </div>
   );
 }

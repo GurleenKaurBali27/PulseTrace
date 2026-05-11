@@ -4,7 +4,7 @@
   "description": "Production-ready API Failure Visualizer - Monitor, analyze, and alert on API failures across multiple services",
   "author": "Your Name",
   "license": "MIT",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
@@ -34,9 +34,9 @@
     "reinstall": "npm run clean && npm run setup"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
+    "axios": "^1.6.2",
     "chalk": "^4.1.2",
-    "axios": "^1.6.2"
+    "concurrently": "^8.2.2"
   },
   "keywords": [
     "api",
@@ -52,6 +52,8 @@
   },
   "bugs": {
     "url": "https://github.com/yourusername/api-failure-visualizer/issues"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1"
   }
 }
-

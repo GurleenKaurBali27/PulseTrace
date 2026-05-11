@@ -120,30 +120,36 @@ function getMethodColor(method) {
 
 const styles = {
   container: {
-    backgroundColor: "#f9f9f9",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    padding: "20px",
-    marginBottom: "20px"
+    display: "flex",
+    gap: "20px",
+    alignItems: "center",
+    flexWrap: "wrap",
+    width: "100%"
   },
   section: {
-    marginBottom: "15px"
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    flex: "1",
+    minWidth: "200px"
   },
   label: {
-    display: "block",
-    fontWeight: "bold",
-    marginBottom: "8px",
-    fontSize: "14px",
-    color: "#333"
+    fontWeight: "600",
+    fontSize: "12px",
+    color: "var(--text-muted)",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em"
   },
   searchInput: {
     width: "100%",
-    maxWidth: "400px",
-    padding: "8px 12px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
+    padding: "10px 14px",
+    border: "1px solid var(--border-color)",
+    borderRadius: "8px",
     fontSize: "14px",
-    fontFamily: "sans-serif"
+    backgroundColor: "rgba(0,0,0,0.2)",
+    color: "var(--text-main)",
+    outline: "none",
+    transition: "border-color 0.2s"
   },
   buttonGroup: {
     display: "flex",
@@ -151,10 +157,10 @@ const styles = {
     gap: "8px"
   },
   filterButton: {
-    padding: "8px 16px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    backgroundColor: "white",
+    padding: "8px 14px",
+    border: "1px solid var(--border-color)",
+    borderRadius: "6px",
+    backgroundColor: "rgba(255,255,255,0.05)",
     cursor: "pointer",
     fontSize: "13px",
     fontWeight: "500",
@@ -162,22 +168,25 @@ const styles = {
     whiteSpace: "nowrap"
   },
   filterButtonActive: {
-    backgroundColor: "#007bff",
+    backgroundColor: "var(--accent-primary)",
     color: "white",
-    border: "1px solid #0056b3"
+    borderColor: "var(--accent-primary)"
   },
   filterButtonInactive: {
-    color: "#666"
+    color: "var(--text-muted)"
   },
   clearButton: {
-    backgroundColor: "#ff4444",
-    color: "white",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "4px",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    color: "var(--status-danger)",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
+    padding: "8px 16px",
+    borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "bold",
-    transition: "background-color 0.2s"
+    fontSize: "13px",
+    fontWeight: "600",
+    transition: "all 0.2s",
+    height: "fit-content",
+    alignSelf: "flex-end",
+    marginBottom: "2px"
   }
 };

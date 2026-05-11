@@ -12,12 +12,9 @@ export default function ServiceSelector({ selectedService, onServiceChange }) {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const baseURL = api.defaults.baseURL;
-      const response = await fetch(`${baseURL.replace("/logs", "")}/logs/services`);
-      if (!response.ok) throw new Error("Failed to fetch services");
-      const data = await response.json();
-      if (data.success) {
-        setServices(data.services || []);
+      const response = await api.get("/services");
+      if (response.data && response.data.success) {
+        setServices(response.data.services || []);
       }
     } catch (err) {
       console.error("Error fetching services:", err);
@@ -34,10 +31,10 @@ export default function ServiceSelector({ selectedService, onServiceChange }) {
           display: "block",
           fontSize: "12px",
           fontWeight: "600",
-          color: "#666",
-          marginBottom: "6px",
+          color: "var(--text-muted)",
+          marginBottom: "8px",
           textTransform: "uppercase",
-          letterSpacing: "0.5px"
+          letterSpacing: "0.05em"
         }}
       >
         Service
@@ -49,15 +46,16 @@ export default function ServiceSelector({ selectedService, onServiceChange }) {
         disabled={loading}
         style={{
           width: "100%",
-          padding: "10px 12px",
-          border: "1px solid #ddd",
-          borderRadius: "6px",
-          backgroundColor: "white",
-          color: "#333",
+          padding: "10px 14px",
+          border: "1px solid var(--border-color)",
+          borderRadius: "8px",
+          backgroundColor: "rgba(0,0,0,0.2)",
+          color: "var(--text-main)",
           fontSize: "14px",
           cursor: loading ? "not-allowed" : "pointer",
           opacity: loading ? 0.6 : 1,
-          fontFamily: "inherit"
+          fontFamily: "inherit",
+          outline: "none"
         }}
       >
         <option value="">All Services</option>

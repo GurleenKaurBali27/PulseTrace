@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/api-failure-visualizer.git",
+    "url": "https://github.com/GurleenKaurBali27/api-failure-visualizer.git",
     "directory": "tracker"
   },
   "keywords": [
@@ -24,7 +24,7 @@
     "requests",
     "responses"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "Gurleen Kaur Bali",
   "license": "MIT",
   "type": "commonjs",
   "engines": {
@@ -39,11 +39,10 @@
   "files": [
     "tracker.js",
     "logger.js",
-    "sendLog.js",
-    "logs/"
+    "sendLog.js"
   ],
-  "homepage": "https://github.com/yourusername/api-failure-visualizer#readme",
+  "homepage": "https://github.com/GurleenKaurBali27/api-failure-visualizer#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/api-failure-visualizer/issues"
+    "url": "https://github.com/GurleenKaurBali27/api-failure-visualizer/issues"
   }
 }

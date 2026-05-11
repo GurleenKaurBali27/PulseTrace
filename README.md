@@ -72,6 +72,80 @@
 ### Prerequisites
 ```
 Node.js ≥ 18.0.0
+# 🚨 API Failure Visualizer
+
+> **Production-ready tool to monitor, visualize, and alert on API failures across multiple microservices**
+
+[![Node.js Version](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](.)
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+- [Project Structure](#-project-structure)
+- [Configuration](#-configuration)
+- [API Endpoints](#-api-endpoints)
+- [Development](#-development)
+- [Deployment](#-deployment)
+- [Roadmap](#-roadmap)
+
+---
+
+## ✨ Features
+
+### 🎯 Real-Time Monitoring
+- **Live Dashboard** - See API failures as they happen with WebSocket updates
+- **Multi-Service Tracking** - Monitor logs from multiple APIs simultaneously
+- **Animated UI** - Smooth transitions using Framer-motion animations
+- **Instant Notifications** - Real-time alerts for critical issues
+
+### 📊 Advanced Analytics
+- **Interactive Charts** - Pie, bar, and custom charts using Recharts
+- **Service Metrics** - Requests by method, status codes, and duration
+- **Top Slow Routes** - Identify performance bottlenecks
+- **Failure Rate Tracking** - Percentage breakdowns and trends
+
+### ⚠️ Smart Alert System
+- **3-Rule Alert Engine**:
+  - 🔴 High Failure Rate (>20% in 5 minutes)
+  - ⚡ Slow Endpoints (avg duration >2000ms)
+  - 🔄 Frequent Errors (≥5 errors per route)
+- **Severity Levels** - Critical (red) vs Warning (yellow)
+- **Auto-Refresh** - Every 10 seconds with service filtering
+
+### 🔍 Detailed Request Tracing
+- **3-Tab Interface**:
+  - Overview with key metrics
+  - Full headers, params, and body details
+  - Raw JSON for debugging
+- **Copy CURL** - Export requests for easy testing
+- **Color-Coded Duration** - Visual performance indicators
+
+### 🏢 Multi-Service Support
+- **Service Selector** - Switch between services instantly
+- **Isolated View** - Filter all data by specific service
+- **Global Overview** - See all services at once
+- **Service Discovery** - Auto-detect all tracked services
+
+### 🛡️ Production Ready
+- **Environment Configuration** - Single `.env` file for all services
+- **Database Abstraction** - SQLite for dev, PostgreSQL for production
+- **Error Handling** - Comprehensive validation and error recovery
+- **CORS Configured** - Secure cross-origin requests
+- **Scalable Architecture** - Ready for microservices
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+```
+Node.js ≥ 18.0.0
 npm ≥ 9.0.0
 Git
 ```
@@ -79,7 +153,7 @@ Git
 ### 1️⃣ Clone & Install
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/api-failure-visualizer.git
+git clone https://github.com/GurleenKaurBali27/api-failure-visualizer.git
 cd api-failure-visualizer
 
 # Install all dependencies
@@ -291,7 +365,7 @@ The project is being developed in 5 phases:
 2. 🔄 **Phase 2: Configuration** - Advanced env validation
 3. 🔄 **Phase 3: Reliability** - Health checks, resilience
 4. 🔄 **Phase 4: Deployment** - PostgreSQL, Vercel, Render, Heroku
-5. 🔄 **Phase 5: Presentation** - Landing page, demo mode
+5. ✅ **Phase 5: Presentation** - Landing page, demo mode
 
 Each phase adds production-readiness features.
 
@@ -361,7 +435,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 💬 Support & Feedback
 
 - 📖 **Documentation**: See [SETUP.md](SETUP.md) for detailed setup and configuration
-- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/api-failure-visualizer/issues)
+- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/GurleenKaurBali27/api-failure-visualizer/issues)
 - 💡 **Ideas**: Share feature requests and ideas
 
 ---
@@ -386,6 +460,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for developers who want visibility into their APIs**
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/api-failure-visualizer.svg?style=social)](https://github.com/yourusername/api-failure-visualizer)
-#   a p i - f a i l u r e - v i s u l a i z e r  
- 
+[![GitHub stars](https://img.shields.io/github/stars/GurleenKaurBali27/api-failure-visualizer.svg?style=social)](https://github.com/GurleenKaurBali27/api-failure-visualizer)
+#   a p i - f a i l u r e - v i s u l a i z e r

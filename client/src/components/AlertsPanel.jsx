@@ -10,14 +10,11 @@ export default function AlertsPanel({ selectedService = "" }) {
   const fetchAlerts = async () => {
     try {
       setLoading(true);
-      const baseURL = api.defaults.baseURL;
-      const baseAlertUrl = `${baseURL.replace("/logs", "")}/logs/alerts`;
-      const url = selectedService ? `${baseAlertUrl}?service=${selectedService}` : baseAlertUrl;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch alerts");
-      const data = await response.json();
-      if (data.success) {
-        setAlerts(data.alerts || []);
+      const url = selectedService ? `/alerts?service=${selectedService}` : "/alerts";
+      const response = await api.get(url);
+      
+      if (response.data && response.data.success) {
+        setAlerts(response.data.alerts || []);
       }
     } catch (err) {
       console.error("Error fetching alerts:", err);

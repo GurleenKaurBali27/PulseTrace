@@ -16,7 +16,17 @@ const logRateLimiter = rateLimit({
   message: "Too many logs created from this IP, please try again later.",
   statusCode: 429,
   keyGenerator: (req) => {
-    // Use X-Forwarded-For for proxy support, fallback to req.ip
+    // Prefer the library helper for IPv6-safe key generation when available
+    try {
+      const erl = require('express-rate-limit');
+      if (typeof erl.ipKeyGenerator === 'function') {
+        return erl.ipKeyGenerator(req);
+      }
+    } catch (e) {
+      // fall back below
+    }
+
+    // Fallback: Use X-Forwarded-For for proxy support, then req.ip
     return (req.headers["x-forwarded-for"] || req.ip || "unknown").split(",")[0].trim();
   },
   handler: (req, res) => {
@@ -223,7 +233,7 @@ router.get("/stats", async (req, res) => {
 
     // Average duration
     const avgDurationResult = await RequestLog.findOne({
-      attributes: [[avg("duration"), "avgDuration"]],
+      attributes: [[sequelize.fn("AVG", sequelize.col("duration")), "avgDuration"]],
       where,
       raw: true
     });
