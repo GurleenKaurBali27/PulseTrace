@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import dotenv from "dotenv";
 import path from "path";
 
@@ -10,7 +11,10 @@ const API_URL = process.env.VITE_API_URL || "http://localhost:5000";
 const CLIENT_PORT = parseInt(process.env.CLIENT_PORT) || 5173;
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
   server: {
     port: CLIENT_PORT,
     strictPort: false,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import { Server, ChevronDown } from "lucide-react";
 
 export default function ServiceSelector({ selectedService, onServiceChange }) {
   const [services, setServices] = useState([]);
@@ -24,47 +25,27 @@ export default function ServiceSelector({ selectedService, onServiceChange }) {
   };
 
   return (
-    <div style={{ marginBottom: "15px" }}>
-      <label
-        htmlFor="service-select"
-        style={{
-          display: "block",
-          fontSize: "12px",
-          fontWeight: "600",
-          color: "var(--text-muted)",
-          marginBottom: "8px",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em"
-        }}
-      >
-        Service
-      </label>
+    <div className="relative group w-full">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+        <Server size={18} />
+      </div>
       <select
         id="service-select"
         value={selectedService}
         onChange={(e) => onServiceChange(e.target.value)}
         disabled={loading}
-        style={{
-          width: "100%",
-          padding: "10px 14px",
-          border: "1px solid var(--border-color)",
-          borderRadius: "8px",
-          backgroundColor: "rgba(0,0,0,0.2)",
-          color: "var(--text-main)",
-          fontSize: "14px",
-          cursor: loading ? "not-allowed" : "pointer",
-          opacity: loading ? 0.6 : 1,
-          fontFamily: "inherit",
-          outline: "none"
-        }}
+        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-12 pr-10 text-sm font-bold text-white focus:border-sky-500/50 outline-none appearance-none transition-all cursor-pointer hover:bg-black/30"
       >
-        <option value="">All Services</option>
+        <option value="" className="bg-slate-900">All Cluster Services</option>
         {services.map((service) => (
-          <option key={service} value={service}>
-            {service}
+          <option key={service} value={service} className="bg-slate-900">
+            {service.toUpperCase()}
           </option>
         ))}
       </select>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+        <ChevronDown size={16} />
+      </div>
     </div>
   );
 }
