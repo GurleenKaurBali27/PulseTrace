@@ -9,18 +9,24 @@ const logger = require("./logger");
  * @param {string} serverUrl - Server URL (default: http://localhost:5000)
  * @returns {Promise<object>} Response from server
  */
-async function sendLog(logData, serverUrl = "http://localhost:5000") {
+async function sendLog(logData, serverUrl = "http://localhost:5000", apiKey = null) {
   const endpoint = `${serverUrl}/logs`;
   const maxRetries = 3;
   let lastError;
 
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await axios.post(endpoint, logData, {
-        timeout: 5000, // 5 second timeout
-        headers: {
-          "Content-Type": "application/json"
-        }
+        timeout: 5000, 
+        headers
       });
 
       logger.info(`Log sent successfully to ${endpoint}`, {

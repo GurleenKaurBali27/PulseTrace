@@ -8,8 +8,14 @@ pnpm-debug.log
 # Environment files (NEVER commit .env with secrets)
 .env
 .env.local
+.env.production
 .env.*.local
 .env.production.local
+
+# Temp and Scratch
+scratch/
+*.tgz
+
 
 # Database files
 *.db

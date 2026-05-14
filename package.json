@@ -1,7 +1,7 @@
 {
-  "name": "api-failure-visualizer",
+  "name": "pulsetrace",
   "version": "1.0.0",
-  "description": "Production-ready API Failure Visualizer - Monitor, analyze, and alert on API failures across multiple services",
+  "description": "Enterprise-grade Distributed Tracing & API Security Visualizer with Real-time Monitoring and Automated Data Masking.",
   "author": "Gurleen Kaur Bali",
   "license": "MIT",
   "private": false,

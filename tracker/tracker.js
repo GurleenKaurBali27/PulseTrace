@@ -1,5 +1,50 @@
 const logger = require("./logger");
 const sendLog = require("./sendLog");
+const { AsyncLocalStorage } = require("async_hooks");
+const http = require("http");
+const https = require("https");
+
+// Context storage for tracing
+const traceContext = new AsyncLocalStorage();
+
+/**
+ * Monkey-patch http/https request to automatically propagate trace headers
+ */
+const patchRequest = (module) => {
+  const originalRequest = module.request;
+  module.request = function (options, callback) {
+    const context = traceContext.getStore();
+    
+    if (context) {
+      // Handle both string URLs and options objects
+      if (typeof options === 'string') {
+        try {
+          const url = new URL(options);
+          options = {
+            protocol: url.protocol,
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search,
+            method: 'GET',
+            headers: {}
+          };
+        } catch (e) {
+          return originalRequest.apply(this, arguments);
+        }
+      }
+
+      const headers = (options.headers = options.headers || {});
+      headers["x-trace-id"] = context.traceId;
+      headers["x-span-id"] = context.spanId;
+      headers["x-request-depth"] = (context.requestDepth + 1).toString();
+    }
+    
+    return originalRequest.apply(this, arguments);
+  };
+};
+
+patchRequest(http);
+patchRequest(https);
 
 /**
  * Express middleware to track API requests and responses
@@ -26,7 +71,19 @@ function tracker(options = {}) {
 
   return function (req, res, next) {
     const startTime = Date.now();
+    
+    // Trace Identification
+    const traceId = req.headers["x-trace-id"] || req.headers["traceparent"]?.split("-")[1] || require("crypto").randomUUID();
+    const parentSpanId = req.headers["x-span-id"] || req.headers["traceparent"]?.split("-")[2] || null;
+    const spanId = require("crypto").randomUUID();
+    const requestDepth = parseInt(req.headers["x-request-depth"] || "0");
+
     const requestId = `${Date.now()}-${Math.random()}`;
+
+    return traceContext.run({ traceId, spanId, requestDepth }, () => {
+      // Propagate trace IDs back in response headers
+      res.setHeader("x-trace-id", traceId);
+      res.setHeader("x-span-id", spanId);
 
     // Store original end function
     const originalEnd = res.end;
@@ -74,8 +131,12 @@ function tracker(options = {}) {
       };
 
       const logData = {
-        serviceName, // Include serviceName in log data
+        serviceName,
         requestId,
+        traceId,
+        spanId,
+        parentSpanId,
+        requestDepth,
         method: req.method,
         route: req.originalUrl || req.url,
         statusCode: res.statusCode,
@@ -83,7 +144,7 @@ function tracker(options = {}) {
         error: res.statusCode >= 400 ? `HTTP ${res.statusCode}` : null,
         requestBody: req.body ? JSON.stringify(req.body) : null,
         responseSize: Buffer.byteLength(responseBody),
-        details: JSON.stringify(details) // Store full details as JSON string
+        details: JSON.stringify(details)
       };
 
       // Log locally
@@ -97,13 +158,15 @@ function tracker(options = {}) {
       });
 
       // Send to server asynchronously (non-blocking)
-      sendLog(logData, serverUrl).catch((error) => {
+      const currentApiKey = options.apiKey || process.env.PULSE_API_KEY || req.headers["x-api-key"] || null;
+      sendLog(logData, serverUrl, currentApiKey).catch((error) => {
         logger.error(`Failed to send log for request ${requestId}:`, error);
       });
     });
 
     next();
-  };
+  });
+};
 }
 
 /**

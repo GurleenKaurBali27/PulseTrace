@@ -17,7 +17,7 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:3000,http://
 const corsOptions = {
   origin: CORS_ORIGINS,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "x-trace-id", "x-span-id", "x-parent-span-id", "x-request-depth", "x-api-key"],
   credentials: true
 };
 
@@ -130,6 +130,52 @@ app.post("/create-data", (req, res) => {
     message: "Data created successfully",
     id: Math.random().toString(36).substr(2, 9),
     data: { name, email }
+  });
+});
+
+/**
+ * GET /chain - Root of a distributed trace
+ * Calls /internal and returns combined results
+ */
+app.get("/chain", async (req, res) => {
+  const axios = require("axios");
+  
+  // Trace headers are automatically populated by the tracker middleware
+  // and attached to the request headers. We propagate them to the next service.
+  const traceHeaders = {
+    "x-trace-id": res.getHeader("x-trace-id"),
+    "x-span-id": res.getHeader("x-span-id"),
+    "x-request-depth": (parseInt(req.headers["x-request-depth"] || "0") + 1).toString()
+  };
+
+  try {
+    // Call "internal" service (simulated on same process but different endpoint)
+    const response = await axios.get(`http://localhost:${SERVER_PORT}/internal`, {
+      headers: traceHeaders
+    });
+
+    res.status(200).json({
+      message: "Chain completed",
+      traceId: traceHeaders["x-trace-id"],
+      localSpan: traceHeaders["x-span-id"],
+      downstream: response.data
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Chain failed",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /internal - Internal service in a trace
+ */
+app.get("/internal", (req, res) => {
+  res.status(200).json({
+    message: "Internal processing complete",
+    service: "internal-worker",
+    traceId: req.headers["x-trace-id"]
   });
 });
 
