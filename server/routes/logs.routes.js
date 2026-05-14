@@ -5,6 +5,10 @@ const { Op } = require("sequelize");
 const sequelize = require("../database/database");
 const rateLimit = require("express-rate-limit");
 const { validateLog } = require("../validation/logSchema");
+const maskingEngine = require("../utils/masking");
+const { rbac, ROLES } = require("../middleware/rbac");
+const AuditLog = require("../models/AuditLog");
+const authenticate = require("../middleware/auth.middleware");
 
 /**
  * Rate limiter for POST /logs endpoint
@@ -50,7 +54,18 @@ const logRateLimiter = rateLimit({
  */
 router.post("/", logRateLimiter, async (req, res) => {
   try {
-    // Validate incoming data with Zod schema
+    // 0. Validate API Key
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey) {
+      return res.status(401).json({ success: false, error: "API Key required (x-api-key)" });
+    }
+
+    const project = await Project.findOne({ where: { apiKey } });
+    if (!project) {
+      return res.status(401).json({ success: false, error: "Invalid API Key" });
+    }
+
+    // 1. Validate incoming data with Zod schema
     const validation = await validateLog(req.body);
     
     if (!validation.success) {
@@ -62,12 +77,16 @@ router.post("/", logRateLimiter, async (req, res) => {
       });
     }
 
-    // Create log with validated data
-    const log = await RequestLog.create(validation.data, {
-      validate: true // Ensure Sequelize validation is also applied
+    // SANITIZATION LAYER: Apply masking before DB storage and WS broadcast
+    const sanitizedData = maskingEngine.sanitizeLog(validation.data);
+
+    // Create log with sanitized data
+    const log = await RequestLog.create({
+      ...sanitizedData,
+      projectId: project.id
     });
 
-    // Emit new log via WebSocket to all connected clients
+    // Emit sanitized log via WebSocket
     if (req.app.io) {
       req.app.io.emit("new_log", {
         success: true,
@@ -92,6 +111,19 @@ router.post("/", logRateLimiter, async (req, res) => {
 });
 
 /**
+ * GET /audit-logs - Retrieve all audit logs (Admin only)
+ */
+router.get("/audit-logs", authenticate, rbac(ROLES.ADMIN), async (req, res) => {
+  try {
+    const logs = await AuditLog.findAll({ order: [["createdAt", "DESC"]] });
+    const sanitizedLogs = logs.map(log => maskingEngine.sanitizeLog(log.toJSON()));
+    res.json({ success: true, data: sanitizedLogs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /logs - Retrieve all logs with optional filtering
  * Query params:
  * - limit: number of logs to retrieve (default: 100)
@@ -103,7 +135,7 @@ router.post("/", logRateLimiter, async (req, res) => {
  * - search: alias for route filter
  * - service: filter by service name (e.g., 'auth-service')
  */
-router.get("/", async (req, res) => {
+router.get("/", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
     const {
       limit = 100,
@@ -116,7 +148,9 @@ router.get("/", async (req, res) => {
       service
     } = req.query;
 
+    const { Project } = require("../models");
     const where = {};
+    const projectWhere = { OrganizationId: req.organization.id };
 
     // Filter by service name
     if (service) {
@@ -157,8 +191,14 @@ router.get("/", async (req, res) => {
 
     const { count, rows } = await RequestLog.findAndCountAll({
       where,
+      include: [{
+        model: Project,
+        where: projectWhere,
+        required: true,
+        attributes: []
+      }],
       order: [["createdAt", "DESC"]],
-      limit: Math.min(parseInt(limit), 500), // Max 500 to prevent large responses
+      limit: Math.min(parseInt(limit), 500),
       offset: parseInt(offset)
     });
 
@@ -181,16 +221,21 @@ router.get("/", async (req, res) => {
 /**
  * GET /logs/errors - Get only failed requests
  */
-router.get("/errors", async (req, res) => {
+router.get("/errors", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
+    const { Project } = require("../models");
 
     const logs = await RequestLog.findAll({
       where: {
-        error: {
-          [Op.not]: null
-        }
+        error: { [Op.not]: null }
       },
+      include: [{
+        model: Project,
+        where: { OrganizationId: req.organization.id },
+        required: true,
+        attributes: []
+      }],
       order: [["createdAt", "DESC"]],
       limit: parseInt(limit),
       offset: parseInt(offset)
@@ -214,19 +259,31 @@ router.get("/errors", async (req, res) => {
  * Query params:
  * - service: filter stats by service name (optional)
  */
-router.get("/stats", async (req, res) => {
+router.get("/stats", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
     const { service } = req.query;
+    const { Project } = require("../models");
 
     const where = {};
     if (service) {
       where.serviceName = service;
     }
+    
+    const projectFilter = {
+      model: Project,
+      where: { OrganizationId: req.organization.id },
+      required: true,
+      attributes: []
+    };
 
     // Total requests and success/error counts
-    const totalRequests = await RequestLog.count({ where });
+    const totalRequests = await RequestLog.count({ 
+      where, 
+      include: [projectFilter] 
+    });
     const successCount = await RequestLog.count({
-      where: { ...where, statusCode: { [Op.lt]: 400 } }
+      where: { ...where, statusCode: { [Op.lt]: 400 } },
+      include: [projectFilter]
     });
     const errorCount = totalRequests - successCount;
     const failureRate = totalRequests > 0 ? ((errorCount / totalRequests) * 100).toFixed(2) : 0;
@@ -235,6 +292,7 @@ router.get("/stats", async (req, res) => {
     const avgDurationResult = await RequestLog.findOne({
       attributes: [[sequelize.fn("AVG", sequelize.col("duration")), "avgDuration"]],
       where,
+      include: [projectFilter],
       raw: true
     });
     const avgDuration = avgDurationResult?.avgDuration ? parseFloat(avgDurationResult.avgDuration).toFixed(2) : 0;
@@ -320,12 +378,19 @@ router.get("/stats", async (req, res) => {
 /**
  * GET /logs/services - Get list of distinct service names from logs
  */
-router.get("/services", async (req, res) => {
+router.get("/services", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
+    const { Project } = require("../models");
     const services = await RequestLog.findAll({
       attributes: [
         [sequelize.fn("DISTINCT", sequelize.col("serviceName")), "serviceName"]
       ],
+      include: [{
+        model: Project,
+        where: { OrganizationId: req.organization.id },
+        required: true,
+        attributes: []
+      }],
       raw: true,
       order: [["serviceName", "ASC"]]
     });
@@ -350,9 +415,17 @@ router.get("/services", async (req, res) => {
 /**
  * GET /logs/:id - Retrieve a specific log by ID with full details
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
-    const log = await RequestLog.findByPk(req.params.id);
+    const { Project } = require("../models");
+    const log = await RequestLog.findOne({
+      where: { id: req.params.id },
+      include: [{
+        model: Project,
+        where: { OrganizationId: req.organization.id },
+        required: true
+      }]
+    });
 
     if (!log) {
       return res.status(404).json({
@@ -361,9 +434,25 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    const isRevealRequested = req.query.reveal === 'true';
+    let responseData = log.toJSON();
+
+    // AUDIT LOGGING: If admin requests to reveal sensitive data
+    if (isRevealRequested && req.userRole === ROLES.ADMIN) {
+      await AuditLog.create({
+        userRole: req.userRole,
+        action: 'REVEAL_SENSITIVE_DATA',
+        targetId: req.params.id,
+        metadata: { path: req.originalUrl }
+      });
+      // In a real system, you might fetch unmasked data from a vault here
+      // For this implementation, we acknowledge the reveal request
+      responseData._isRevealed = true;
+    }
+
     res.json({
       success: true,
-      data: log
+      data: responseData
     });
   } catch (error) {
     console.error("Error fetching log:", error);
@@ -383,7 +472,7 @@ router.get("/:id", async (req, res) => {
  * - Slow Endpoint: avg duration > 2000ms
  * - Frequent Errors: same route has >= 5 errors recently
  */
-router.get("/alerts", async (req, res) => {
+router.get("/alerts", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
   try {
     const { service } = req.query;
     const alerts = [];
@@ -400,8 +489,15 @@ router.get("/alerts", async (req, res) => {
     }
 
     // Get recent logs (last 5 minutes)
+    const { Project } = require("../models");
     const recentLogs = await RequestLog.findAll({
       where,
+      include: [{
+        model: Project,
+        where: { OrganizationId: req.organization.id },
+        required: true,
+        attributes: []
+      }],
       raw: true
     });
 
@@ -490,6 +586,159 @@ router.get("/alerts", async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+/**
+ * GET /logs/traces/:traceId - Retrieve all spans for a specific trace
+ */
+router.get("/traces/:traceId", authenticate, rbac('VIEW_METRICS'), async (req, res) => {
+  try {
+    const { traceId } = req.params;
+    const { Project } = require("../models");
+    const spans = await RequestLog.findAll({
+      where: { traceId },
+      include: [{
+        model: Project,
+        where: { OrganizationId: req.organization.id },
+        required: true,
+        attributes: []
+      }],
+      order: [["createdAt", "ASC"]]
+    });
+
+    res.json({
+      success: true,
+      data: spans
+    });
+  } catch (error) {
+    console.error("Error fetching trace:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /logs/service-map - Build service dependency map
+ */
+router.get("/service-map", async (req, res) => {
+  try {
+    // Find all unique pairs of (parentService, childService)
+    // We can infer this from spans that have a parentSpanId
+    const logs = await RequestLog.findAll({
+      where: {
+        parentSpanId: { [Op.not]: null }
+      },
+      attributes: ["serviceName", "parentSpanId", "traceId"],
+      raw: true
+    });
+
+    // To find the parent service name, we need to look up the parent span
+    // This is inefficient if done per log, so let's do a join or aggregate
+    const parentSpanIds = logs.map(l => l.parentSpanId);
+    const parentSpans = await RequestLog.findAll({
+      where: {
+        spanId: { [Op.in]: parentSpanIds }
+      },
+      attributes: ["spanId", "serviceName"],
+      raw: true
+    });
+
+    const parentSpanMap = parentSpans.reduce((acc, s) => {
+      acc[s.spanId] = s.serviceName;
+      return acc;
+    }, {});
+
+    const dependencies = [];
+    const seen = new Set();
+
+    logs.forEach(log => {
+      const parentService = parentSpanMap[log.parentSpanId];
+      if (parentService && parentService !== log.serviceName) {
+        const key = `${parentService}->${log.serviceName}`;
+        if (!seen.has(key)) {
+          dependencies.push({
+            from: parentService,
+            to: log.serviceName
+          });
+          seen.add(key);
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: dependencies
+    });
+  } catch (error) {
+    console.error("Error fetching service map:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /logs/trace-timeline - Get list of unique traces with high-level stats
+ */
+router.get("/trace-timeline", async (req, res) => {
+  try {
+    const { limit = 50, offset = 0, service } = req.query;
+
+    const where = {
+      traceId: { [Op.not]: null }
+    };
+    if (service) {
+      where.serviceName = service;
+    }
+
+    // Get unique traces by selecting the root span (requestDepth: 0)
+    // or just aggregate all spans grouped by traceId
+    const traces = await RequestLog.findAll({
+      attributes: [
+        "traceId",
+        [sequelize.fn("MIN", sequelize.col("createdAt")), "startTime"],
+        [sequelize.fn("MAX", sequelize.col("createdAt")), "endTime"],
+        [sequelize.fn("COUNT", sequelize.col("id")), "spanCount"],
+        [sequelize.fn("SUM", sequelize.col("duration")), "totalDuration"],
+        [sequelize.fn("MAX", sequelize.col("statusCode")), "maxStatus"]
+      ],
+      where,
+      group: ["traceId"],
+      order: [[sequelize.fn("MIN", sequelize.col("createdAt")), "DESC"]],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      raw: true
+    });
+
+    res.json({
+      success: true,
+      data: traces
+    });
+  } catch (error) {
+    console.error("Error fetching trace timeline:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /audit-logs - Retrieve system security audit logs
+ */
+router.get("/security/audits", rbac('VIEW_AUDITS'), async (req, res) => {
+  try {
+    const audits = await AuditLog.findAll({
+      order: [['createdAt', 'DESC']],
+      limit: 100
+    });
+    res.json({ success: true, data: audits });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

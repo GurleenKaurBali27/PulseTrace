@@ -8,6 +8,10 @@ const { initializeSocketIO } = require("./socket");
 const { initializeConfig } = require("./config/validator");
 const { startMonitoring, getDetailedReport } = require("./utils/monitoring");
 const { runPendingMigrations } = require("./database/migrate");
+const logsRouter = require("./routes/logs.routes");
+const authRouter = require("./routes/auth.routes");
+const orgRouter = require("./routes/org.routes");
+require("./models"); // Register models and associations
 
 let server;
 let isShuttingDown = false;

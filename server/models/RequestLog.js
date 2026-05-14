@@ -76,7 +76,7 @@ const RequestLog = sequelize.define(
       allowNull: true
     },
     requestBody: {
-      type: DataTypes.TEXT,
+      type: DataTypes.JSON,
       allowNull: true
     },
     responseSize: {
@@ -86,6 +86,27 @@ const RequestLog = sequelize.define(
         min: 0
       },
       comment: "Response size in bytes"
+    },
+    traceId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: "Unique ID for the entire request chain"
+    },
+    spanId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: "Unique ID for this specific operation"
+    },
+    parentSpanId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: "ID of the calling span"
+    },
+    requestDepth: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: "Nesting depth of the request"
     },
     details: {
       type: DataTypes.JSON,
@@ -102,6 +123,11 @@ const RequestLog = sequelize.define(
         }
         return value;
       }
+    },
+    projectId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      comment: "ID of the project this log belongs to"
     }
   },
   {
