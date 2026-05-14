@@ -1,8 +1,9 @@
 # 🌀 PulseTrace | API Failure Visualizer
 
-**PulseTrace** is a powerful, "cyber-luxe" dashboard designed to help developers watch their API traffic in real-time. Think of it as a "Security Camera" for your website's background communication. 
+**PulseTrace** is a secure, real-time API failure visualizer designed to help developers monitor traffic and debug failures instantly. 
 
-When your app talks to a database or another service and something goes wrong, PulseTrace catches it, visualizes it, and helps you fix it—all while keeping your sensitive data (like passwords and credit cards) safe and hidden.
+PulseTrace captures, visualizes, and helps resolve API issues while automatically masking sensitive data (PII) to ensure security and compliance.
+
 
 ---
 
@@ -46,9 +47,24 @@ We used modern, industry-standard tools to build PulseTrace:
 *   **SQLite / PostgreSQL**: Where all your logs are stored safely.
 *   **Custom Masking Engine**: Our home-grown regex engine that redacts sensitive PII (Personally Identifiable Information).
 
+
+---
+
+## 📂 Project Structure
+
+To keep things organized, PulseTrace is split into several focused directories:
+
+*   **`client/`**: The React-based frontend. Contains the "Cyber-Luxe" dashboard, analytics charts, and real-time visualization components.
+*   **`server/`**: The Node.js/Express backend. Handles data ingestion from trackers, manages the database, and powers the real-time Socket.io engine.
+*   **`tracker/`**: A standalone, high-performance middleware package that you can drop into any Node.js app to start tracking failures.
+*   **`docs/`**: The "Knowledge Hub." Contains detailed guides on security, setup, API references, and development phases.
+*   **`scripts/`**: Automation tools for system verification, database migrations, and deployment readiness.
+*   **`testAPI/`**: A playground/sample service used to demonstrate and test the tracker's capabilities.
+
 ---
 
 ## 📦 How to Run Locally
+
 
 1.  **Clone the Repo**:
     ```bash
